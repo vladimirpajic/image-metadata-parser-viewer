@@ -5,10 +5,14 @@ import sector from "@turf/sector";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
 
+let layers: string[] = [];
+
+let sources: string[] = [];
+
 const map = new maplibregl.Map({
   container: "map",
   style:
-    "https://api.maptiler.com/maps/streets/style.json?key=k2rxMRHW2SewPa5yqNRS",
+    "https://api.maptiler.com/maps/satellite/style.json?key=k2rxMRHW2SewPa5yqNRS",
   center: [-121, 45],
   zoom: 5,
   pitch: 45
@@ -19,6 +23,10 @@ const processImageButton = document.getElementById(
 ) as HTMLButtonElement;
 
 processImageButton.onclick = async () => {
+  layers.forEach(layer => map.removeLayer(layer));
+
+  sources.forEach(source => map.removeSource(source));
+
   const inputImageEl = document.getElementById(
     "input-image"
   ) as HTMLInputElement;
@@ -66,10 +74,19 @@ processImageButton.onclick = async () => {
         }
       });
 
-      // @ts-ignore
-      const [value, scale] = tags.xmp?.GPSIMUYaw.description.split("/");
+      let yaw = 0;
 
-      const yaw = parseInt(value, 10) / parseInt(scale, 10);
+      switch (tags.xmp?.about.description) {
+        case "DJI Meta Data": {
+          yaw = parseInt(tags.xmp?.GimbalYawDegree.description, 10);
+          break;
+        }
+        default: {
+          // @ts-ignore
+          const [value, scale] = tags.xmp?.GPSIMUYaw.description.split("/");
+          yaw = parseInt(value, 10) / parseInt(scale, 10);
+        }
+      }
 
       const translatedPoint = transformTranslate(point, 0.05, yaw);
 
@@ -113,5 +130,13 @@ processImageButton.onclick = async () => {
         },
       });
     }
+
+    layers = [...layers, `image-location-${i}`, `image-direction-${i}`, `image-fov-${i}`];
+
+    sources = [...sources, `point-${i}`, `direction-${i}`, `fov-${i}`];
   }
+
+  inputImageEl.value = "";
+
+  inputImageEl.files = null;
 };
