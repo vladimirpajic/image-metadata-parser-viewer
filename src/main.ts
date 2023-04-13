@@ -3,6 +3,7 @@ import ExifReader from "exifreader";
 import transformTranslate from "@turf/transform-translate";
 import sector from "@turf/sector";
 import "maplibre-gl/dist/maplibre-gl.css";
+import * as features from './oncor-structures.json';
 import "./style.css";
 
 let layers: string[] = [];
@@ -12,7 +13,7 @@ let sources: string[] = [];
 const map = new maplibregl.Map({
   container: "map",
   style:
-    "https://api.maptiler.com/maps/satellite/style.json?key=k2rxMRHW2SewPa5yqNRS",
+    "https://api.maptiler.com/maps/streets/style.json?key=k2rxMRHW2SewPa5yqNRS",
   center: [-121, 45],
   zoom: 5,
   pitch: 45
@@ -34,6 +35,20 @@ processImageButton.onclick = async () => {
   if (!inputImageEl.files) {
     return;
   }
+
+  map.addSource(`features`, {
+    type: "geojson",
+    data: features,
+  });
+
+  map.addLayer({
+    id: `features`,
+    type: "symbol",
+    source: 'features',
+    paint: {
+      'icon-color': '#0f0'
+    }
+  });
 
   for (let i = 0; i < inputImageEl.files.length; i++) {
     const image = inputImageEl.files[i];
